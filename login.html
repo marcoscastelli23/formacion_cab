@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Login — Formación CAB</title>
+  <style>
+    :root{ color-scheme: light dark; }
+    body{
+      font-family: Arial, sans-serif;
+      min-height:100dvh; margin:0;
+      display:grid; place-items:center;
+      background:#0f172a url('AFA.jpg') center/cover no-repeat fixed;
+    }
+    .card{
+      width:min(360px, 92vw);
+      background:rgba(255,255,255,.92);
+      border-radius:16px; padding:24px;
+      box-shadow: 0 20px 45px rgba(0,0,0,.25);
+      backdrop-filter: blur(3px);
+
+    }
+    h1{ margin:0 0 10px; font-size:22px; color:#0f172a; text-align: center;}
+    p{ margin:0 0 16px; opacity:.8; color:darkgray; text-align: center; }
+    label{ display:block; font-weight:600; color:#0f172a; margin:.5rem 0 .25rem; text-align: center; }
+    input{
+      width:80%; padding:10px 12px; font-size:15px;
+      border:1px solid #cbd5e1; border-radius:10px; outline:none;
+      display: block; margin-left: auto; margin-right: auto; 
+    }
+    input:focus{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.15); display: block; margin-left: auto; margin-right: auto;}
+    button{
+      width: 80%; margin-top: 12px; padding: 12px 14px; font-size: 15px; font-weight: 700; color: white; background: #2563eb; border: 0;
+      border-radius: 10px; cursor: pointer; display: block; margin-left: auto; margin-right: auto; /* centra el botón dentro del form */
+    }
+    .error{ color:#b91c1c; background:#fee2e2; border:1px solid #fecaca; padding:8px 10px; border-radius:8px; margin:8px 0 0; display:none }
+    .hint{ font-size:12px; opacity:.6; margin-top:10px; }
+
+  </style>
+</head>
+<body>
+  <form class="card" id="loginForm" autocomplete="on" >
+    <h1>Acceso — Formación CAB</h1>
+    <p>Ingresá tus credenciales para continuar.</p>
+
+    <label for="user">Usuario</label>
+    <input id="user" name="user" required autofocus>
+
+    <label for="pass">Contraseña</label>
+    <input id="pass" name="pass" type="password" required>
+
+    <button type="submit">Ingresar</button>
+    <div class="error" id="errBox">Usuario o contraseña inválidos.</div>
+    <div class="hint">Tip: podés cambiar estas credenciales en el archivo <code>login.html</code>.</div>
+  </form>
+
+  <script>
+    // ====== CONFIGURACIÓN BÁSICA (editá si querés) ======
+    const USERS = [
+      { user: "mcastelli", pass: "CAB.1905" },
+      { user: "fmantegani", pass: "CAB.1905" },
+      { user: "jcejas", pass: "CAB.1905" },
+      { user: "lrobles", pass: "CAB.1905" },
+      // { user: "otro", pass: "clave" },
+    ];
+    const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24h
+
+    // Si ya está logueado y la sesión es válida, redirige a index.html
+    (function autoRedirectIfLogged(){
+      try{
+        const s = JSON.parse(localStorage.getItem("cab_auth")||"null");
+        if (s && (Date.now() - s.ts) < SESSION_MAX_AGE_MS) {
+          const next = new URLSearchParams(location.search).get("next") || "index.html";
+          location.replace(next);
+        }
+      }catch{}
+    })();
+
+    // Login
+    const form = document.getElementById("loginForm");
+    const errBox = document.getElementById("errBox");
+    form.addEventListener("submit", (e)=>{
+      e.preventDefault();
+      const user = (document.getElementById("user").value || "").trim();
+      const pass = (document.getElementById("pass").value || "").trim();
+      const ok = USERS.some(u => u.user === user && u.pass === pass);
+      if(!ok){
+        errBox.style.display = "block";
+        return;
+      }
+      const session = { user, ts: Date.now() };
+      localStorage.setItem("cab_auth", JSON.stringify(session));
+
+      const next = new URLSearchParams(location.search).get("next") || "index.html";
+      location.replace(next);
+    });
+  </script>
+</body>
+</html>
