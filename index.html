@@ -77,7 +77,6 @@
       margin: auto;
     }
 
-
     .no-print-on-pdf{ }   /* utilitaria */
     .ct-header{ }         /* encabezado “Cuerpo Técnico” */
 
@@ -118,31 +117,56 @@
       #excelBlock * {
        display: none !important;
        }
+
+     .delete-x {
+       display: none !important;
+       }
+
     }
 
     /* Botón alineado a la derecha, arriba */
-#logout-container {
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
-  padding: 10px 20px 0 0;
-  box-sizing: border-box;
-}
+   #logout-container {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px 20px 0 0;
+    box-sizing: border-box;
+    }
 
-#logout-btn {
-  background-color: #dc2626;
-  color: white;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
+   #logout-btn {
+    background-color: #dc2626;
+    color: white;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    }
+
+  #logout-btn:hover {
+    background-color: #b91c1c;
+  }
+
+  /* ❌ Letra X pequeña arriba a la derecha */
+  .delete-x {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  color: red;
+  font-weight: bold;
+  font-size: 16px;
   cursor: pointer;
-  transition: background 0.2s ease;
-}
+  display: none;
+  background: transparent;
+  user-select: none;
+  z-index: 10;
+  }
 
-#logout-btn:hover {
-  background-color: #b91c1c;
-}
+  /* Mostrar solo al pasar el mouse */
+  .player-container:hover .delete-x {
+    display: block;
+  }
 
   </style>
 </head>
@@ -434,25 +458,57 @@
     });
 
     function renderPlayers(){
-      field.innerHTML=""; bench.innerHTML="";
-      players.forEach(player=>{
-        const c=document.createElement("div"); c.className="player-container";
-        const camiseta=document.createElement("div"); camiseta.className="player";
-        const num=document.createElement("div"); num.className="player-number"; num.textContent=player.number;
-        camiseta.appendChild(num);
-        const name=document.createElement("div"); name.className="player-name"; name.contentEditable=true; name.textContent=player.name;
-        name.addEventListener("input",()=>player.name=name.textContent);
-        c.appendChild(camiseta); c.appendChild(name);
-        if(player.position==="titular"){
-          c.style.left=player.x+"px"; c.style.top=player.y+"px";
-          makeDraggable(c,player);
-          field.appendChild(c);
-        } else {
-          c.style.position="relative"; c.style.left="0px"; c.style.top="0px";
-          bench.appendChild(c);
-        }
-      });
+  field.innerHTML="";
+  bench.innerHTML="";
+
+  players.forEach(player=>{
+    const c=document.createElement("div");
+    c.className="player-container";
+
+    // ❌ X de eliminación
+    const delX = document.createElement("span");
+    delX.className = "delete-x";
+    delX.textContent = "×";
+    delX.title = "Eliminar jugador";
+    delX.onclick = (e) => {
+      e.stopPropagation();
+      const idx = players.indexOf(player);
+      if (idx !== -1) players.splice(idx, 1);
+      renderPlayers();
+    };
+    c.appendChild(delX);
+
+    const camiseta=document.createElement("div");
+    camiseta.className="player";
+
+    const num=document.createElement("div");
+    num.className="player-number";
+    num.textContent=player.number;
+    camiseta.appendChild(num);
+
+    const name=document.createElement("div");
+    name.className="player-name";
+    name.contentEditable=true;
+    name.textContent=player.name;
+    name.addEventListener("input",()=>player.name=name.textContent);
+
+    c.appendChild(camiseta);
+    c.appendChild(name);
+
+    if(player.position==="titular"){
+      c.style.left=player.x+"px";
+      c.style.top=player.y+"px";
+      makeDraggable(c,player);
+      field.appendChild(c);
+    } else {
+      c.style.position="relative";
+      c.style.left="0px";
+      c.style.top="0px";
+      bench.appendChild(c);
     }
+  });
+}
+
 
     function makeDraggable(el,playerData){
       let isDragging=false, offsetX=0, offsetY=0;
