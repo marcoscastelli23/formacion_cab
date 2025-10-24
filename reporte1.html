@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Consulta de Reportes — Formación CAB</title>
+  <style>
+    :root{ color-scheme: light; }
+    body{ font-family: Arial, sans-serif; margin:0; padding:16px; background:#f5f7fb; }
+    .container{ max-width: 1200px; margin: 0 auto; }
+    .header{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+    .header img{ height:56px; width:auto; display:block; }
+    .brand{ font-weight:800; font-size:20px; color:#0f172a; }
+    .toolbar{ display:flex; gap:8px; align-items:center; justify-content:flex-end; margin:12px 0; }
+    .btn{ border:0; border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer; background:#2563eb; color:#fff; }
+    .btn.sec{ background:#334155; } .btn.warn{ background:#dc2626; } .btn.alt{ background:#059669; }
+    .btn:disabled{ opacity:.65; cursor:not-allowed; }
+    .card{ background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:16px; box-shadow:0 8px 18px rgba(0,0,0,.06); }
+    h2{ margin:0 0 10px; font-size:20px; }
+    h3{ margin:0 0 8px; font-size:16px; color:#334155; }
+    label{ font-weight:600; font-size:14px; color:#0f172a; display:block; margin-bottom:6px; }
+    input[type="date"], input[type="text"], select{ width:100%; border:1px solid #cbd5e1; border-radius:10px; padding:8px 10px; font-size:14px; outline:none; background:#fff; }
+    input:focus, select:focus{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+    .grid{ display:grid; gap:12px; grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .table-wrap{ overflow:auto; }
+    table{ width:100%; border-collapse:collapse; font-size:14px; background:#fff; }
+    thead th{ position:sticky; top:0; background:#f1f5f9; border-bottom:1px solid #e5e7eb; z-index:1; padding:8px; text-align:left; font-weight:700; }
+    tbody td{ border-bottom:1px solid #f1f5f9; padding:6px; }
+    tbody tr:nth-child(odd){ background:#fcfdff; }
+    .center{ text-align:center; }
+    .muted{ font-size:12px; color:#475569; }
+    .meta{ display:grid; gap:8px; grid-template-columns: repeat(4,minmax(0,1fr)); }
+    @media (max-width: 920px){ .grid{ grid-template-columns:1fr; } .meta{ grid-template-columns:1fr; } .btn{ padding:10px 12px; } thead th, tbody td{ font-size:13px; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img id="logoClub" src="logo.png" alt="Logo del club" onerror="this.style.display='none'">
+      <div class="brand">Formación CAB — Consulta de Reportes</div>
+    </div>
+    <div class="toolbar">
+      <button class="btn sec" id="btnVolver">Volver al inicio</button>
+      <button class="btn" id="btnPlanilla">Ir a planilla</button>
+    </div>
+
+    <div class="card">
+      <h2>Buscar planillas guardadas</h2>
+      <div class="grid">
+        <div><label>Fecha</label><input type="date" id="q_fecha"></div>
+        <div><label>Rival</label><input type="text" id="q_rival" placeholder="Ej: River, San Lorenzo…"></div>
+        <div style="display:flex; align-items:end; gap:8px;">
+          <button class="btn" id="btnBuscar">Buscar</button>
+          <button class="btn sec" id="btnLimpiar">Limpiar</button>
+        </div>
+      </div>
+      <p class="muted" style="margin-top:8px;">Cada guardado se almacena como un <strong>registro independiente</strong> en <code>cab_postpartido_hist</code>. Podés filtrar por fecha y/o rival.</p>
+
+      <div class="table-wrap" style="margin-top:12px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Rival</th>
+              <th>Categoría</th>
+              <th>Condición</th>
+              <th>Resultado</th>
+              <th>Formación</th>
+              <th class="center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyList">
+            <tr><td colspan="7" style="padding:8px;">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" id="detalleCard" style="display:none;">
+      <h2>Detalle de la planilla</h2>
+      <div class="meta" style="margin-bottom:12px;">
+        <div><strong>Categoría:</strong> <span id="d_categoria"></span></div>
+        <div><strong>Rival:</strong> <span id="d_rival"></span></div>
+        <div><strong>Condición:</strong> <span id="d_condicion"></span></div>
+        <div><strong>Predio:</strong> <span id="d_predio"></span></div>
+        <div><strong>Fecha:</strong> <span id="d_fecha"></span></div>
+        <div><strong>Hora:</strong> <span id="d_hora"></span></div>
+        <div><strong>N° Fecha:</strong> <span id="d_nfecha"></span></div>
+        <div><strong>Formación:</strong> <span id="d_formacion"></span></div>
+        <div><strong>Resultado:</strong> <span id="d_resultado"></span></div>
+        <div><strong>Guardado:</strong> <span id="d_ts"></span></div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="center">N°</th>
+              <th>Jugador</th>
+              <th>Pos</th>
+              <th class="center">Min</th>
+              <th class="center">Goles</th>
+              <th class="center">Asist</th>
+              <th class="center">TA</th>
+              <th class="center">TR</th>
+              <th class="center">Puntaje</th>
+              <th>Comentario</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyDetalle"></tbody>
+        </table>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button class="btn" id="btnCSV">Exportar CSV</button>
+        <button class="btn sec" id="btnImprimir">Imprimir</button>
+      </div>
+
+      <div style="margin-top:12px;">
+        <h3>Otros comentarios</h3>
+        <div id="d_obs" class="muted">—</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const LIST_KEY   = 'cab_postpartido_hist';
+    const SINGLE_KEY = 'cab_postpartido';
+
+    const byId = (id) => document.getElementById(id);
+    const listBody = byId('tbodyList');
+    const q_fecha  = byId('q_fecha');
+    const q_rival  = byId('q_rival');
+
+    const detalleCard  = byId('detalleCard');
+    const d_categoria  = byId('d_categoria');
+    const d_rival      = byId('d_rival');
+    const d_condicion  = byId('d_condicion');
+    const d_predio     = byId('d_predio');
+    const d_fecha      = byId('d_fecha');
+    const d_hora       = byId('d_hora');
+    const d_nfecha     = byId('d_nfecha');
+    const d_formacion  = byId('d_formacion');
+    const d_resultado  = byId('d_resultado');
+    const d_ts         = byId('d_ts');
+    const d_obs        = byId('d_obs');
+    const tbodyDetalle = byId('tbodyDetalle');
+
+    function getHist(){ try{ return JSON.parse(localStorage.getItem(LIST_KEY) || '[]'); } catch{ return []; } }
+    function setHist(arr){ localStorage.setItem(LIST_KEY, JSON.stringify(arr||[])); }
+    function toDisplayISO(iso){ if(!iso) return ''; const [y,m,d] = iso.split('-'); return `${d}/${m}/${y}`; }
+    function norm(s){ return (s||'').toString().trim().toLowerCase(); }
+    function formatTs(ts){ try{ const d = new Date(ts); const pad = n=> String(n).padStart(2,'0'); return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }catch{ return String(ts||''); } }
+
+    (function migrateIfNeeded(){
+      const hist = getHist(); if (hist.length) return;
+      try{
+        const single = JSON.parse(localStorage.getItem(SINGLE_KEY) || 'null');
+        if (single && single.meta){
+          const migrated = Object.assign({}, single);
+          migrated.id = Date.now();
+          if (!migrated.meta.fechaISO && migrated.meta.fecha){
+            const m = migrated.meta.fecha.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (m){ migrated.meta.fechaISO = `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`; }
+          }
+          if (!migrated.players){ migrated.players = []; }
+          setHist([migrated]);
+        }
+      }catch{}
+    })();
+
+    function renderList(rows){
+      listBody.innerHTML = '';
+      if(!rows.length){
+        listBody.innerHTML = '<tr><td colspan="7" style="padding:8px;">Sin resultados</td></tr>'; return;
+      }
+      rows.slice().sort((a,b)=> (b.meta?.ts||0) - (a.meta?.ts||0)).forEach((item)=>{
+        const tr = document.createElement('tr');
+        const fechaDisp = item.meta?.fechaDisplay || toDisplayISO(item.meta?.fechaISO || '') || (item.meta?.fecha || '');
+        tr.innerHTML = `
+          <td>${fechaDisp}</td>
+          <td>${item.meta?.rival || ''}</td>
+          <td>${item.meta?.categoria || ''}</td>
+          <td>${item.meta?.condicion || ''}</td>
+          <td>${item.res ? (item.res.res_cab ?? 0) + ' - ' + (item.res.res_rival ?? 0) : ''}</td>
+          <td>${item.meta?.formacion || ''}</td>
+          <td class="center"><button class="btn alt btn-ver" data-id="${item.id}">Ver</button></td>
+        `;
+        listBody.appendChild(tr);
+      });
+    }
+
+    function buscar(){
+      const all = getHist();
+      const fISO = (q_fecha.value || '').trim();
+      const rTxt = norm(q_rival.value);
+      const out = all.filter(x=>{
+        const meta = x.meta || {};
+        const okFecha = fISO ? (meta.fechaISO === fISO) : true;
+        const okRival = rTxt ? norm(meta.rival).includes(rTxt) : true;
+        return okFecha && okRival;
+      });
+      renderList(out);
+    }
+
+    function limpiar(){ q_fecha.value = ''; q_rival.value = ''; renderList(getHist()); detalleCard.style.display = 'none'; }
+
+    function viewById(id){
+      const all = getHist();
+      const item = all.find(x=> String(x.id) === String(id)); if(!item) return;
+      d_categoria.textContent = item.meta?.categoria || '';
+      d_rival.textContent     = item.meta?.rival || '';
+      d_condicion.textContent = item.meta?.condicion || '';
+      d_predio.textContent    = item.meta?.predio || '';
+      d_fecha.textContent     = item.meta?.fechaDisplay || toDisplayISO(item.meta?.fechaISO || '') || (item.meta?.fecha || '');
+      d_hora.textContent      = item.meta?.hora || '';
+      d_nfecha.textContent    = item.meta?.nFecha || '';
+      d_formacion.textContent = item.meta?.formacion || '';
+      d_resultado.textContent = `${item.res?.res_cab ?? 0} - ${item.res?.res_rival ?? 0}`;
+      d_ts.textContent        = item.meta?.ts ? formatTs(item.meta.ts) : '—';
+      d_obs.textContent       = (item.otrosComentarios || '—');
+
+      tbodyDetalle.innerHTML = '';
+      const players = (item.players || []);
+      players.forEach(p=>{
+        const key = (p.number||'') + '|' + (p.name||'');
+        const r = (item.jugadores && item.jugadores[key]) || {};
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="center">${p.number||''}</td>
+          <td>${p.name||''}</td>
+          <td>${r.pos ?? ''}</td>
+          <td class="center">${r.min ?? ''}</td>
+          <td class="center">${r.gol ?? ''}</td>
+          <td class="center">${r.ast ?? ''}</td>
+          <td class="center">${r.ta  ?? ''}</td>
+          <td class="center">${r.tr  ?? ''}</td>
+          <td class="center">${r.punt?? ''}</td>
+          <td>${r.com ?? ''}</td>
+        `;
+        tbodyDetalle.appendChild(tr);
+      });
+
+      detalleCard.style.display = '';
+      detalleCard.dataset.sel = String(item.id);
+    }
+
+    function exportCSVSelected(){
+      const id = detalleCard.dataset.sel; if(!id) return;
+      const all = getHist(); const item = all.find(x=> String(x.id) === String(id)); if(!item) return;
+
+      const headers = ['Numero','Jugador','Posicion','Minutos','Goles','Asistencias','TA','TR','Puntaje','Comentario'];
+      const rows = [headers];
+      const players = (item.players || []);
+      players.forEach(p=>{
+        const key = (p.number||'') + '|' + (p.name||'');
+        const r = (item.jugadores && item.jugadores[key]) || {};
+        rows.push([
+          p.number || '',
+          p.name || '',
+          r.pos ?? '',
+          r.min ?? '',
+          r.gol ?? '',
+          r.ast ?? '',
+          r.ta  ?? '',
+          r.tr  ?? '',
+          r.punt?? '',
+          (r.com ?? '').replace(/\r?\n/g,' ').trim()
+        ]);
+      });
+      rows.push([]);
+      rows.push(['Resultado', `${item.res?.res_cab ?? 0} - ${item.res?.res_rival ?? 0}`]);
+      rows.push(['Categoria', item.meta?.categoria || '']);
+      rows.push(['Rival', item.meta?.rival || '']);
+      rows.push(['Condicion', item.meta?.condicion || '']);
+      rows.push(['Predio', item.meta?.predio || '']);
+      rows.push(['Fecha', item.meta?.fechaDisplay || toDisplayISO(item.meta?.fechaISO || '') || (item.meta?.fecha || '')]);
+      rows.push(['Hora', item.meta?.hora || '']);
+      rows.push(['NFecha', item.meta?.nFecha || '']);
+      rows.push(['Formacion', item.meta?.formacion || '']);
+      rows.push([]);
+      rows.push(['Otros comentarios', (item.otrosComentarios||'').replace(/\r?\n/g,' ').trim()]);
+
+      const csv = rows.map(r => r.map(v=>{ const s = String(v ?? ''); if (/[",\n]/.test(s)) return `"${s.replace(/"/g,'""')}"`; return s; }).join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = `planilla_${item.meta?.rival || 'rival'}_${item.meta?.fechaISO || Date.now()}.csv`; a.click();
+    }
+
+    document.getElementById('btnBuscar').addEventListener('click', buscar);
+    document.getElementById('btnLimpiar').addEventListener('click', limpiar);
+    document.getElementById('btnVolver').addEventListener('click', ()=> location.href='index.html');
+    document.getElementById('btnPlanilla').addEventListener('click', ()=> location.href='reporte.html');
+    document.getElementById('btnCSV').addEventListener('click', exportCSVSelected);
+    document.getElementById('btnImprimir').addEventListener('click', ()=> window.print());
+    document.getElementById('tbodyList').addEventListener('click', (e)=>{
+      const btn = e.target.closest('.btn-ver'); if(!btn) return; viewById(btn.dataset.id); window.scrollTo({ top: document.body.scrollHeight, behavior:'smooth' });
+    });
+
+    renderList(getHist());
+  </script>
+</body>
+</html>
