@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Editar Partido — Formación CAB</title>
+
+<!-- Firebase Auth + Guardian -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, getIdTokenResult } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC0xXLWV1JOh2WUpfPsynhFD9jtTZk61A8",
+    authDomain: "login-formacion-cab.firebaseapp.com",
+    projectId: "login-formacion-cab",
+    storageBucket: "login-formacion-cab.firebasestorage.app",
+    messagingSenderId: "911638329049",
+    appId: "1:911638329049:web:e1292a94f7a470c4e0f0c8",
+    measurementId: "G-JLXBNXCDKJ"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return location.replace('login.html');
+    const token = await getIdTokenResult(user, true);
+    const role  = token.claims.role || (token.claims.admin ? "admin" : "user");
+
+    window.CAB    = { uid: user.uid, email: user.email, role };
+    window.CAB_NS = 'cab_' + user.uid + '_';
+
+    window.dispatchEvent(new Event('cab-auth-ready'));
+  });
+</script>
+
+<!-- ●●● ESTILO UNIFICADO – DISEÑO A ●●● -->
+<style>
+
+  :root {
+    color-scheme: light;
+    --cab-blue: #0277bd;
+    --cab-blue-dark: #015a8c;
+    --gray-bg: #f5f7fb;
+    --panel-bg: #ffffff;
+    --border: #e5e7eb;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    background: var(--gray-bg);
+    margin: 0;
+    padding: 20px;
+  }
+
+  h1, h2 {
+    margin-top: 0;
+    color: #222;
+  }
+
+  .panel, .card {
+    background: var(--panel-bg);
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    margin-bottom: 22px;
+  }
+
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #cfd4dc;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #fff;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 70px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+
+  th {
+    background: #f0f2f5;
+    padding: 8px;
+    border: 1px solid #d5d8dc;
+  }
+
+  td {
+    border: 1px solid #e1e4e8;
+    padding: 6px;
+  }
+
+  .center {
+    text-align: center;
+  }
+
+  .btn {
+    background: var(--cab-blue);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: 0.2s;
+    margin-right: 10px;
+  }
+
+  .btn:hover {
+    background: var(--cab-blue-dark);
+  }
+
+  .btn.sec {
+    background: #68717a;
+  }
+
+  .btn.sec:hover {
+    background: #4a5259;
+  }
+
+  .btn-row {
+    margin-top: 25px;
+  }
+
+</style>
+
+</head>
+
+<body onload="loadEdicion()">
+
+<h1>Editar Partido</h1>
+
+<!-- DATOS DEL PARTIDO -->
+<div class="panel">
+  <h2>Datos del Partido</h2>
+  <div class="grid2">
+    <div><label>Categoría</label><input id="e_categoria"></div>
+    <div><label>Condición</label><input id="e_condicion"></div>
+    <div><label>Rival</label><input id="e_rival"></div>
+    <div><label>Predio</label><input id="e_predio"></div>
+    <div><label>Fecha</label><input id="e_fecha"></div>
+    <div><label>Hora</label><input id="e_hora"></div>
+    <div><label>N° Fecha</label><input id="e_nfecha"></div>
+    <div><label>Formación</label><input id="e_formacion"></div>
+  </div>
+</div>
+
+<!-- RESULTADO -->
+<div class="card">
+  <h2>Resultado</h2>
+  <div class="grid2">
+    <div><label>Goles CAB</label><input id="res_cab" type="number"></div>
+    <div><label>Goles Rival</label><input id="res_rival" type="number"></div>
+  </div>
+</div>
+
+<!-- PLANILLA -->
+<div class="card">
+  <h2>Planilla jugador por jugador</h2>
+  <table>
+    <thead>
+      <tr>
+        <th class="center">N°</th>
+        <th>Jugador</th>
+        <th>Posición</th>
+        <th class="center">Min</th>
+        <th class="center">Gol</th>
+        <th class="center">Ast</th>
+        <th class="center">TA</th>
+        <th class="center">TR</th>
+        <th class="center">Punt</th>
+        <th>Comentario</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<!-- COMENTARIOS -->
+<div class="card">
+  <h2>Comentarios</h2>
+  <textarea id="otrosComentarios"></textarea>
+</div>
+
+<div class="btn-row">
+  <button class="btn" onclick="saveChanges()">Guardar cambios</button>
+  <button class="btn sec" onclick="location.href='reporte1.html'">Volver</button>
+</div>
+
+<!-- ●●● SCRIPTS ORIGINALES (sin cambios funcionales) ●●● -->
+<script>
+function nsGetSafe(k){
+  try{ if(window.nsGet){ const v=window.nsGet(k); if(v!=null) return v; } }
+  catch{}
+  return localStorage.getItem(k);
+}
+
+function nsSetSafe(k,v){
+  try{ if(window.nsSet) window.nsSet(k,v); }catch{}
+  try{ localStorage.setItem(k,v); }catch{}
+}
+
+function getHist(){
+  try{
+    const v = nsGetSafe('cab_postpartido_hist');
+    return v ? JSON.parse(v) : [];
+  }catch{
+    return [];
+  }
+}
+
+function setHist(arr){
+  nsSetSafe('cab_postpartido_hist', JSON.stringify(arr||[]));
+}
+
+let registro=null, players=[], uid=null;
+
+function loadEdicion(){
+  const params = new URLSearchParams(location.search);
+  uid = params.get("uid");
+
+  if(!uid){
+    alert("UID faltante");
+    location.href="reporte1.html";
+    return;
+  }
+
+  const hist = getHist();
+
+  registro = hist.find(x =>
+    String(x.id) === String(uid) ||
+    String(x.meta?.uid) === String(uid)
+  );
+
+  if(!registro){
+    alert("Registro no encontrado");
+    location.href="reporte1.html";
+    return;
+  }
+
+  const m = registro.meta || {};
+
+  e_categoria.value = m.categoria || "";
+  e_condicion.value = m.condicion || "";
+  e_rival.value     = m.rival || "";
+  e_predio.value    = m.predio || "";
+  e_fecha.value     = m.fecha || "";
+  e_hora.value      = m.hora || "";
+  e_nfecha.value    = m.nFecha || "";
+  e_formacion.value = m.formacion || "";
+
+  res_cab.value   = registro.res?.res_cab   ?? "";
+  res_rival.value = registro.res?.res_rival ?? "";
+
+  otrosComentarios.value = registro.otrosComentarios || "";
+
+  players = registro.players || [];
+
+  renderPlayers();
+}
+
+function renderPlayers(){
+  tbody.innerHTML = "";
+
+  const jd = registro.jugadores || {};
+
+  players.forEach(p=>{
+    const key = (p.number||"") + "|" + (p.name||"");
+    const r = jd[key] || {};
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td class='center'><input data-k='num' type='number' value='${p.number||""}'></td>
+      <td><input data-k='nom' value='${p.name||""}'></td>
+      <td><input data-k='pos' value='${r.pos||p.position||""}'></td>
+      <td class='center'><input data-k='min' type='number' value='${r.min??""}'></td>
+      <td class='center'><input data-k='gol' type='number' value='${r.gol??""}'></td>
+      <td class='center'><input data-k='ast' type='number' value='${r.ast??""}'></td>
+      <td class='center'><input data-k='ta' type='number' value='${r.ta??""}'></td>
+      <td class='center'><input data-k='tr' type='number' value='${r.tr??""}'></td>
+      <td class='center'><input data-k='punt' type='number' step='0.1' value='${r.punt??""}'></td>
+      <td><input data-k='com' value='${r.com??""}'></td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+function saveChanges(){
+
+  const meta = {
+    uid: registro.meta?.uid || uid,
+    ts: Date.now(),
+    categoria: e_categoria.value,
+    rival:     e_rival.value,
+    condicion: e_condicion.value,
+    predio:    e_predio.value,
+    fecha:     e_fecha.value,
+    fechaISO:  registro.meta?.fechaISO || "",
+    hora:      e_hora.value,
+    nFecha:    e_nfecha.value,
+    formacion: e_formacion.value
+  };
+
+  const filas = [...tbody.querySelectorAll("tr")];
+  const jugadoresData = {};
+
+  filas.forEach((tr, idx)=>{
+    const p = players[idx];
+    const item = {};
+    const inputs = tr.querySelectorAll("input");
+
+    inputs.forEach(inp=>{
+      const k = inp.dataset.k;
+      let val = inp.value;
+
+      if(["min","gol","ast","ta","tr","punt"].includes(k)){
+        val = val==="" ? null : Number(val);
+      }
+
+      item[k] = val;
+
+      if(k==="num") p.number = val;
+      if(k==="nom") p.name   = val;
+    });
+
+    const key = (p.number||"") + "|" + (p.name||"");
+    jugadoresData[key] = item;
+  });
+
+  const res = {
+    res_cab:   Number(res_cab.value || 0),
+    res_rival: Number(res_rival.value || 0)
+  };
+
+  const nuevo = {
+    id: meta.uid,
+    meta,
+    res,
+    jugadores: jugadoresData,
+    players,
+    otrosComentarios: otrosComentarios.value
+  };
+
+  let hist = getHist();
+  const idx = hist.findIndex(x =>
+    String(x.id) === String(uid) ||
+    String(x.meta?.uid) === String(uid)
+  );
+
+  if(idx !== -1) hist[idx] = nuevo;
+  else hist.push(nuevo);
+
+  setHist(hist);
+
+  alert("Cambios guardados correctamente ✔");
+  location.href = "reporte1.html";
+}
+</script>
+
+</body>
+</html>

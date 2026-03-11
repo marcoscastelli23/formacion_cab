@@ -1,0 +1,411 @@
+/* ============================================================
+   FUENTES OFICIALES - BELGRANO
+============================================================ */
+@font-face {
+    font-family: "Antenna";
+    src: url("fonts/AntennaCond-Light.otf") format("opentype");
+    font-weight: 300;
+}
+@font-face {
+    font-family: "Antenna";
+    src: url("fonts/AntennaCond-Bold.otf") format("opentype");
+    font-weight: 700;
+}
+@font-face {
+    font-family: "Antenna";
+    src: url("fonts/AntennaCond-Black.otf") format("opentype");
+    font-weight: 900;
+}
+
+body {
+    font-family: "Antenna", Arial, sans-serif;
+    background: #f1f5f9;
+    color: #0f172a;
+    margin: 0;
+}
+
+/* ============================================================
+   PALETA OFICIAL BELGRANO
+============================================================ */
+:root {
+    --cab-celeste: #00AEEF;
+    --cab-azul: #004B79;
+    --cab-negro: #000000;
+    --cab-gris: #D3D8DE;
+    --cab-gris-claro: #F2F6FA;
+    --cab-rojo: #D62828;
+    --cab-verde: #009E73;
+
+    --radius: 14px;
+    --shadow: 0 10px 30px rgba(0,0,0,.08);
+}
+
+/* ============================================================
+   STRUCTURE / CONTAINERS
+============================================================ */
+.container {
+    max-width: 1150px;
+    margin: 0 auto;
+    padding: 16px;
+}
+
+.card {
+    background: #fff;
+    padding: 20px;
+    border-radius: var(--radius);
+    border: 1px solid var(--cab-gris);
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+}
+
+/* ============================================================
+   HEADER
+============================================================ */
+.header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.header img {
+    height: 60px;
+}
+
+.header-title {
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--cab-negro);
+}
+
+/* ============================================================
+   BUTTONS
+============================================================ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: var(--radius);
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    color: white;
+    transition: 0.15s ease;
+}
+
+.btn:hover { transform: scale(1.04); }
+
+.btn-primary { background: var(--cab-celeste); }
+.btn-secondary { background: var(--cab-azul); }
+.btn-danger { background: var(--cab-rojo); }
+.btn-success { background: var(--cab-verde); }
+.btn-dark { background: var(--cab-negro); }
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ============================================================
+   FORMS
+============================================================ */
+label {
+    font-size: 14px;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 4px;
+}
+
+input, select, textarea {
+    width: 100%;
+    border: 1px solid var(--cab-gris);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-size: 15px;
+    background: #fff;
+    transition: border 0.15s;
+    box-sizing: border-box;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: var(--cab-celeste);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0,174,239,.25);
+}
+
+textarea {
+    min-height: 90px;
+}
+
+/* ============================================================
+   TOOLBAR
+============================================================ */
+.toolbar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+/* ============================================================
+   GRID
+============================================================ */
+.grid2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+@media (max-width: 900px) {
+    .grid2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================
+   TABLES
+============================================================ */
+.table-wrap {
+    overflow: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--cab-gris);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+thead th {
+    background: var(--cab-celeste);
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-weight: 900;
+    position: sticky;
+    top: 0;
+}
+
+tbody td {
+    padding: 8px;
+    border-bottom: 1px solid var(--cab-gris-claro);
+}
+
+tbody tr:nth-child(odd) {
+    background: #f9fcff;
+}
+
+tbody tr:hover {
+    background: rgba(0,174,239,.15);
+}
+
+/* ============================================================
+   FIELD (CAMPO DE JUEGO)
+============================================================ */
+#field {
+    position: relative;
+    background: url("1137.jpg") center/cover no-repeat;
+    width: 360px;
+    height: 540px;
+    border: 3px solid white;
+    border-radius: 12px;
+    margin: 15px auto;
+    box-shadow: var(--shadow);
+}
+
+.player-container {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 60px;
+    cursor: grab;
+}
+
+.player {
+    width: 60px;
+    height: 70px;
+    background: url("camiseta.png") center/contain no-repeat;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.player-number {
+    margin-bottom: 25px;
+    font-weight: 900;
+    font-size: 14px;
+    color: var(--cab-negro);
+}
+
+.player-name {
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--cab-negro);
+    background: rgba(255,255,255,0.85);
+    padding: 2px 6px;
+    border-radius: 8px;
+}
+
+/* eliminar jugador */
+.delete-x {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--cab-rojo);
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 900;
+    cursor: pointer;
+    opacity: 0;
+    transition: 0.15s;
+}
+
+.player-container:hover .delete-x {
+    opacity: 1;
+}
+
+/* ============================================================
+   SUPLENTES
+============================================================ */
+#bench {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    background: #fff;
+    padding: 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--cab-gris);
+    box-shadow: var(--shadow);
+}
+
+#bench .player-container {
+    position: relative;
+}
+
+/* ============================================================
+   LOGIN PAGE
+============================================================ */
+.login-card {
+    background: white;
+    padding: 26px;
+    border-radius: var(--radius);
+    width: min(400px, 90vw);
+    box-shadow: var(--shadow);
+}
+
+.login-title {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 900;
+    margin-bottom: 10px;
+}
+
+/* ============================================================
+   PRINT MODE
+============================================================ */
+@media print {
+    .toolbar,
+    button,
+    .btn,
+    .delete-x {
+        display: none !important;
+    }
+
+    body {
+        background: white;
+    }
+
+    .card {
+        box-shadow: none;
+    }
+}
+
+.grid3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+@media (max-width: 900px) {
+    .grid3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.grid6 {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 14px;
+}
+
+@media (max-width: 1200px) {
+    .grid6 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 800px) {
+    .grid6 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .grid6 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.linea-formacion {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+.linea-formacion select,
+.linea-formacion input {
+    height: 42px;
+}
+
+.linea-formacion .btn {
+    height: 42px;
+    display: flex;
+    align-items: center;
+}
+
+.btn-whatsapp {
+    background: #25D366 !important; /* Verde WhatsApp */
+    color: white !important;
+}
+.btn-whatsapp:hover {
+    background: #1ebe5b !important;
+    transform: scale(1.04);
+}
+
+.btn-pdf {
+    background: #D32F2F !important; /* Rojo PDF */
+    color: white !important;
+}
+
+.btn-pdf:hover {
+    background: #b52a2a !important;
+    transform: scale(1.04);
+}
+
+.smart-item:hover {
+    background: #e5f3ff;
+}

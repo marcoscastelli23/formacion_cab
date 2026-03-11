@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Test — Setup Primer Admin</title>
+  <style>
+    body{font-family:system-ui,Arial,sans-serif;margin:20px;background:#f8fafc}
+    .card{max-width:640px;margin:auto;background:#fff;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:20px}
+    h1{margin:0 0 12px;font-size:22px}
+    label{display:block;margin-top:12px}
+    input{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:10px}
+    button{margin-top:14px;padding:10px 12px;border:0;border-radius:10px;background:#0d6efd;color:#fff;cursor:pointer}
+    pre{background:#0b1220;color:#e6edf3;padding:12px;border-radius:10px;overflow:auto}
+    .hint{color:#6b7280;font-size:12px;margin-top:10px}
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-functions.js";
+
+    // Config del proyecto (la que nos pasaste)
+    const firebaseConfig = {
+      apiKey: "AIzaSyC0xXLWV1JOh2WUpfPsynhFD9jtTZk61A8",
+      authDomain: "login-formacion-cab.firebaseapp.com",
+      projectId: "login-formacion-cab",
+      storageBucket: "login-formacion-cab.firebasestorage.app",
+      messagingSenderId: "911638329049",
+      appId: "1:911638329049:web:e1292a94f7a470c4e0f0c8",
+      measurementId: "G-JLXBNXCDKJ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const functions = getFunctions(app);
+
+    async function runOnce(e){
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim().toLowerCase();
+      const username = document.getElementById('username').value.trim().toLowerCase();
+      const adminEmail = document.getElementById('adminEmail').value.trim().toLowerCase();
+      const adminPass  = document.getElementById('adminPass').value;
+
+      const out = document.getElementById('out');
+      out.textContent = "Ejecutando...";
+
+      try{
+        // 1) Iniciar sesión con una cuenta que exista en Auth (no necesita ser admin).
+        //    La función misma verifica que no exista otro admin previamente.
+        if(adminEmail && adminPass){
+          await signInWithEmailAndPassword(auth, adminEmail, adminPass);
+        }
+
+        // 2) Llamar a la función "setup_promoteAdminByEmail" (debe estar desplegada)
+        const setup = httpsCallable(functions, "setup_promoteAdminByEmail");
+        const res = await setup({ email, username });
+        out.textContent = "OK → UID: " + res.data.uid + "  (admin creado)";
+      }catch(err){
+        out.textContent = "ERROR: " + (err.message || String(err));
+      }
+    }
+
+    window.runOnce = runOnce;
+  </script>
+</head>
+<body>
+  <div class="card">
+    <h1>Setup primer admin (one-shot)</h1>
+    <p>Usá este script una sola vez para promocionar a <b>mcastelli</b> como admin, si aún no existe ningún admin.</p>
+    <form onsubmit="runOnce(event)">
+      <label>Username a promover</label>
+      <input id="username" placeholder="mcastelli" value="mcastelli" required />
+      <label>Email del usuario en Auth</label>
+      <input id="email" type="email" placeholder="mcastelli@tu-dominio.com" required />
+      <label class="hint">Opcional: si la función requiere que estés autenticado, podés loguearte acá con cualquier cuenta de Auth (no necesita ser admin).</label>
+      <label>Email para iniciar sesión (opcional)</label>
+      <input id="adminEmail" type="email" placeholder="tu-usuario@dominio.com" />
+      <label>Contraseña (opcional)</label>
+      <input id="adminPass" type="password" placeholder="••••••" />
+      <button type="submit">Promover a admin</button>
+    </form>
+    <p class="hint">Al finalizar y ver “OK”, <b>ELIMINÁ</b> este archivo del servidor por seguridad.</p>
+    <pre id="out"></pre>
+  </div>
+</body>
+</html>

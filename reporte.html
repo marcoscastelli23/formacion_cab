@@ -1,269 +1,503 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Planilla Post-Partido — Formación CAB</title>
-  <style>
-    :root{ color-scheme: light; }
-    body{ font-family: Arial, sans-serif; margin:0; padding:16px; background:#f5f7fb; }
-    .container{ max-width: 1100px; margin: 0 auto; }
-    .header{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
-    .header img{ height:56px; width:auto; display:block; }
-    .brand{ font-weight:800; font-size:20px; color:#0f172a; }
-    .toolbar{ display:flex; gap:8px; align-items:center; justify-content:flex-end; margin:12px 0; }
-    .btn{ border:0; border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer; background:#2563eb; color:#fff; }
-    .btn.sec{ background:#334155; } .btn.warn{ background:#dc2626; } .btn.alt{ background:#059669; }
-    .btn:disabled{ opacity:.65; cursor:not-allowed; }
-    .card{ background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:16px; box-shadow:0 8px 18px rgba(0,0,0,.06); }
-    h2{ margin:0 0 10px; font-size:20px; }
-    h3{ margin:0 0 8px; font-size:16px; color:#334155; }
-    .grid{ display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:12px; }
-    .field{ display:flex; flex-direction:column; gap:6px; }
-    label{ font-weight:600; font-size:14px; color:#0f172a; }
-    input[type="text"], input[type="number"], textarea, select{border:1px solid #cbd5e1; border-radius:10px; padding:8px 10px; font-size:14px; outline:none; background:#fff;}
-    input:focus, textarea:focus, select:focus{ border-color:#2563eb; box-shadow:0 0 0 3px rgba(37,99,235,.12); }
-    textarea{ min-height:90px; resize:vertical; }
-    .table-wrap{ overflow:auto; }
-    table{ width:100%; border-collapse: collapse; font-size:14px; background:#fff; }
-    thead th{ position: sticky; top:0; background:#f1f5f9; border-bottom:1px solid #e5e7eb; z-index:1; padding:8px; text-align:left; font-weight:700; }
-    tbody td{ border-bottom:1px solid #f1f5f9; padding:6px; }
-    tbody tr:nth-child(odd){ background:#fcfdff; }
-    .narrow{ width:70px; } .very-narrow{ width:60px; } .w-name{ min-width:200px; }
-    .center{ text-align:center; } .right{ text-align:right; }
-    .hint{ font-size:12px; opacity:.75; }
-    @media (max-width: 920px){ .grid{ grid-template-columns: 1fr; } .btn{ padding:10px 12px; } thead th, tbody td{ font-size:13px; } }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Planilla Post-Partido — Formación CAB</title>
+
+<!-- ===========================================================
+     FIREBASE AUTH GUARD
+=========================================================== -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, getIdTokenResult, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC0xXLWV1JOh2WUpfPsynhFD9jtTZk61A8",
+    authDomain: "login-formacion-cab.firebaseapp.com",
+    projectId: "login-formacion-cab",
+    storageBucket: "login-formacion-cab.firebasestorage.app",
+    messagingSenderId: "911638329049",
+    appId: "1:911638329049:web:e1292a94f7a470c4e0f0c8",
+    measurementId: "G-JLXBNXCDKJ"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  onAuthStateChanged(auth, async (user)=>{
+    if (!user) {
+      const here = location.pathname.split('/').pop() || 'reporte.html';
+      return location.replace("login.html?next="+encodeURIComponent(here+location.search));
+    }
+
+    const token = await getIdTokenResult(user, true);
+    const role = token.claims.role || (token.claims.admin ? "admin" : "user");
+
+    window.CAB = { uid:user.uid, email:user.email, role };
+    window.CAB_NS = "cab_" + user.uid + "_";
+
+    window.logout = () => signOut(auth).then(()=>location.replace("login.html"));
+
+    window.dispatchEvent(new Event("cab-auth-ready"));
+  });
+</script>
+
+<script src="core.js"></script>
+
+<style>
+  body{
+    font-family:system-ui, Arial;
+    margin:0; padding:16px;
+    background:#f5f7fb;
+  }
+
+  .container{ max-width:1100px; margin:0 auto; }
+
+  .header{
+    display:flex; align-items:center; gap:12px;
+    margin-bottom:10px;
+  }
+  .header img{ height:56px; }
+
+  .toolbar{
+    display:flex; gap:8px; justify-content:flex-end;
+    margin:12px 0; flex-wrap:wrap;
+  }
+
+  .btn{
+    padding:10px 14px; border:0; border-radius:10px;
+    font-weight:700; font-size:14px;
+    cursor:pointer; color:white;
+    display:flex; align-items:center; gap:6px;
+  }
+  .sec{ background:#334155; }
+  .warn{ background:#dc2626; }
+  .ok{ background:#059669; }
+  .pri{ background:#2563eb; }
+
+  .card{
+    background:white; padding:16px; border-radius:12px;
+    border:1px solid #e5e7eb;
+    box-shadow:0 6px 16px rgba(15,23,42,.08);
+    margin-bottom:16px;
+  }
+
+  h2{ margin:0 0 10px; font-size:20px; }
+
+  .grid2{
+    display:grid; grid-template-columns:repeat(2,1fr);
+    gap:12px;
+  }
+
+  label{ font-size:14px; font-weight:600; margin-bottom:4px; display:block; }
+
+  input[type="text"], input[type="number"], textarea{
+    width:100%; padding:8px 10px; font-size:14px;
+    border-radius:10px; border:1px solid #cbd5e1;
+  }
+
+  textarea{ min-height:90px; resize:vertical; }
+
+  table{ width:100%; border-collapse:collapse; background:white; }
+  thead th{
+    background:#e5edf9; padding:8px;
+    font-weight:700; border-bottom:1px solid #d0d7e2;
+    text-align:center;
+  }
+  tbody td{
+    padding:6px; border-bottom:1px solid #eef2f7;
+  }
+  tbody tr:nth-child(odd){ background:#fbfdff; }
+</style>
+
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <img id="logoClub" src="logo.png" alt="Logo del club" onerror="this.style.display='none'">
-      <div class="brand">Formación CAB — Planilla Post-Partido</div>
-    </div>
+<div class="container">
 
-    <div class="toolbar">
-      <button class="btn sec" id="btnVolver">Volver al inicio</button>
-      <button class="btn" id="btnGuardar">Guardar</button>
-      <button class="btn alt" id="btnGuardarNuevo">Guardar como nuevo registro</button>
-      <button class="btn" id="btnCSV">Exportar CSV</button>
-      <button class="btn warn" id="btnConsulta">Consulta</button>
-    </div>
-    
-    <div class="card" id="partidoCard">
-      <h2>Datos del partido</h2>
-      <div class="grid">
-        <div class="field"><label>Categoría</label><input id="p_categoria" type="text" disabled></div>
-        <div class="field"><label>Rival</label><input id="p_rival" type="text" disabled></div>
-        <div class="field"><label>Condición</label><input id="p_condicion" type="text" disabled></div>
-        <div class="field"><label>Predio</label><input id="p_predio" type="text" disabled></div>
-        <div class="field"><label>Fecha (día)</label><input id="p_fecha" type="text" disabled></div>
-        <div class="field"><label>Hora</label><input id="p_hora" type="text" disabled></div>
-        <div class="field"><label>N° Fecha</label><input id="p_nfecha" type="text" disabled></div>
-        <div class="field"><label>Formación</label><input id="p_formacion" type="text" disabled></div>
+  <!-- ===========================================
+       HEADER
+  ============================================ -->
+  <div class="header">
+    <img src="logo.png">
+    <div style="font-size:20px; font-weight:800;">Formación CAB — Planilla Post-Partido</div>
+  </div>
+
+  <!-- ===========================================
+       BOTONES
+  ============================================ -->
+  <div class="toolbar">
+    <button class="btn sec" id="btnVolver">Volver al inicio</button>
+    <button class="btn pri" id="btnGuardar">Guardar</button>
+    <button class="btn ok" id="btnGuardarNuevo">Guardar como nuevo</button>
+    <button class="btn pri" id="btnCSV">Exportar CSV</button>
+    <button class="btn warn" id="btnConsulta">Consulta</button>
+  </div>
+
+  <!-- ===========================================
+       DATOS DEL EVENTO
+  ============================================ -->
+  <div class="card">
+    <h2>Datos del partido</h2>
+
+    <div class="grid2">
+      <div>
+        <label>Categoría</label>
+        <input id="p_categoria" type="text" disabled>
       </div>
-    </div>
-
-    <div class="card">
-      <h2>Resultado final</h2>
-      <div class="grid">
-        <div class="field"><label id="labCab">CAB</label><input id="res_cab" type="number" min="0" step="1" placeholder="0"></div>
-        <div class="field"><label id="labRival">Rival</label><input id="res_rival" type="number" min="0" step="1" placeholder="0"></div>
+      <div>
+        <label>Rival</label>
+        <input id="p_rival" type="text" disabled>
       </div>
-      <div class="hint" style="margin-top:6px;">Completá el resultado final (goles). Podés editar las etiquetas según condición (Local/Visitante).</div>
-    </div>
-
-    <div class="card">
-      <h2>Planilla de jugador por jugador</h2>
-      <div class="table-wrap">
-        <table id="tabla">
-          <thead>
-            <tr>
-              <th class="very-narrow center">N°</th>
-              <th class="w-name">Jugador</th>
-              <th>Posición</th>
-              <th class="narrow center">Min</th>
-              <th class="narrow center">Goles</th>
-              <th class="narrow center">Asist</th>
-              <th class="narrow center">TA</th>
-              <th class="narrow center">TR</th>
-              <th class="narrow center">Puntaje</th>
-              <th>Comentario</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
+      <div>
+        <label>Condición</label>
+        <input id="p_condicion" type="text" disabled>
       </div>
-      <div class="hint" style="margin-top:6px;">Todos los campos son numéricos excepto <strong>Posición</strong> y <strong>Comentario</strong>.</div>
-    </div>
-
-    <div class="card">
-      <h3>Otros comentarios del partido</h3>
-      <textarea id="otrosComentarios" placeholder="Observaciones generales, incidencias, desempeño del equipo..."></textarea>
+      <div>
+        <label>Predio</label>
+        <input id="p_predio" type="text" disabled>
+      </div>
+      <div>
+        <label>Fecha</label>
+        <input id="p_fecha" type="text" disabled>
+      </div>
+      <div>
+        <label>Hora</label>
+        <input id="p_hora" type="text" disabled>
+      </div>
+      <div>
+        <label>N° Fecha</label>
+        <input id="p_nfecha" type="text" disabled>
+      </div>
+      <div>
+        <label>Formación</label>
+        <input id="p_formacion" type="text" disabled>
+      </div>
     </div>
   </div>
 
-  <script>
-    const STORAGE_KEY = 'cab_postpartido';
-    const HISTORY_KEY = 'cab_postpartido_hist';
-    const byId = id => document.getElementById(id);
-    function toISOFromDisplay(ddmmyyyy){ if(!ddmmyyyy) return ''; const m = ddmmyyyy.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); return m ? `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}` : ''; }
-    function norm(s){ return (s||'').toString().trim().toLowerCase(); }
+  <!-- ===========================================
+       RESULTADO
+  ============================================ -->
+  <div class="card">
+    <h2>Resultado final</h2>
+    <div class="grid2">
+      <div>
+        <label>CAB</label>
+        <input id="res_cab" type="number" min="0">
+      </div>
+      <div>
+        <label>Rival</label>
+        <input id="res_rival" type="number" min="0">
+      </div>
+    </div>
+  </div>
 
-    const eventInfo = JSON.parse(localStorage.getItem('cab_eventInfo') || '{}');
-    const players   = JSON.parse(localStorage.getItem('cab_players')   || '[]');
-    if (!players.length){ if (confirm("No se encontraron jugadores cargados. ¿Volver a la pantalla principal?")){ location.href = 'index.html'; } }
+  <!-- ===========================================
+       TABLA JUGADORES
+  ============================================ -->
+  <div class="card">
+    <h2>Planilla jugador por jugador</h2>
 
-    const labCab   = byId('labCab'); const labRival = byId('labRival');
-    function aplicarEtiquetasPorCondicion(){
-      labCab.textContent   = (eventInfo.condicion === 'visitante') ? (eventInfo.rival || 'Rival') : 'CAB';
-      labRival.textContent = (eventInfo.condicion === 'visitante') ? 'CAB' : (eventInfo.rival || 'Rival');
-    }
-    function fillHeaderFromEventInfo(){
-      byId('p_categoria').value = eventInfo.categoria || '';
-      byId('p_rival').value     = eventInfo.rival || '';
-      byId('p_condicion').value = eventInfo.condicion || '';
-      byId('p_predio').value    = eventInfo.predio || '';
-      byId('p_fecha').value     = eventInfo.fecha || '';
-      byId('p_hora').value      = eventInfo.hora || '';
-      byId('p_nfecha').value    = eventInfo.nFecha || '';
-      byId('p_formacion').value = eventInfo.formacion || '';
-      aplicarEtiquetasPorCondicion();
-    }
-    fillHeaderFromEventInfo();
+    <div style="overflow:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>N°</th><th>Jugador</th><th>Pos</th><th>Min</th>
+            <th>Gol</th><th>Ast</th><th>TA</th><th>TR</th>
+            <th>Punt</th><th>Comentario</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
 
-    const prev = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    if (prev.res){ byId('res_cab').value = prev.res.res_cab ?? ''; byId('res_rival').value = prev.res.res_rival ?? ''; }
-    if (prev.otrosComentarios){ byId('otrosComentarios').value = prev.otrosComentarios; }
+  <!-- ===========================================
+       COMENTARIO GENERAL
+  ============================================ -->
+  <div class="card">
+    <h2>Otros comentarios</h2>
+    <textarea id="otrosComentarios"></textarea>
+  </div>
 
-    const tbody = document.getElementById('tbody');
-    const ordenados = [...players.filter(p => p.position === 'titular'), ...players.filter(p => p.position !== 'titular')];
-    function filaJugador(p){
-      const key = p.number + '|' + p.name;
-      const rowPrev = (prev.jugadores && prev.jugadores[key]) || {};
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="center">${p.number || ''}</td>
-        <td>${p.name || ''}</td>
-        <td><input type="text" data-k="pos" value="${rowPrev.pos ?? ''}" placeholder="Ej: LI, 8, MCD"/></td>
-        <td class="center"><input class="right" type="number" min="0" step="1" data-k="min" value="${rowPrev.min ?? ''}" placeholder="0"/></td>
-        <td class="center"><input class="right" type="number" min="0" step="1" data-k="gol" value="${rowPrev.gol ?? ''}" placeholder="0"/></td>
-        <td class="center"><input class="right" type="number" min="0" step="1" data-k="ast" value="${rowPrev.ast ?? ''}" placeholder="0"/></td>
-        <td class="center"><input class="right" type="number" min="0" step="1" data-k="ta"  value="${rowPrev.ta  ?? ''}" placeholder="0"/></td>
-        <td class="center"><input class="right" type="number" min="0" step="1" data-k="tr"  value="${rowPrev.tr  ?? ''}" placeholder="0"/></td>
-        <td class="center"><input class="right" type="number" min="0" step="0.1" data-k="punt" value="${rowPrev.punt ?? ''}" placeholder="0"/></td>
-        <td><input type="text" data-k="com" value="${rowPrev.com ?? ''}" placeholder="Comentario breve"/></td>
-      `;
-      tr.dataset.key = key; return tr;
-    }
-    ordenados.forEach(p=> tbody.appendChild(filaJugador(p)));
+</div>
 
-    function getPlanilla(){
-      const jugadores = {};
-      [...tbody.querySelectorAll('tr')].forEach(tr=>{
-        const key = tr.dataset.key; const inputs = tr.querySelectorAll('input'); const data = {};
-        inputs.forEach(inp => {
-          const k = inp.dataset.k; let val = inp.value;
-          if (['min','gol','ast','ta','tr','punt'].includes(k)){ val = (val === '' ? null : Number(val)); }
-          data[k] = val;
-        });
-        jugadores[key] = data;
-      });
-      return {
-        meta: {
-          ts: Date.now(),
-          categoria: eventInfo.categoria || '',
-          rival: eventInfo.rival || '',
-          condicion: eventInfo.condicion || '',
-          predio: eventInfo.predio || '',
-          fecha: eventInfo.fecha || '',
-          fechaISO: eventInfo.fechaISO || '',
-          hora: eventInfo.hora || '',
-          nFecha: eventInfo.nFecha || '',
-          formacion: eventInfo.formacion || ''
-        },
-        res: { res_cab: Number(byId('res_cab').value || 0), res_rival: Number(byId('res_rival').value || 0) },
-        jugadores,
-        otrosComentarios: byId('otrosComentarios').value || ''
-      };
+<script>
+/* ============================================================
+   VARIABLES GLOBALES
+============================================================ */
+let eventInfo = {};
+let players = [];
+let orderedPlayers = [];
+let loadedReporte = null;
+
+/* ============================================================
+   INICIALIZACIÓN
+============================================================ */
+window.addEventListener("cab-auth-ready", initReporte);
+
+function initReporte(){
+  try{
+    eventInfo = loadEventInfo();
+    players = loadPlayers();
+
+    if (!players.length){
+      alert("No se encontraron jugadores cargados.");
+      return location.href="index.html";
     }
 
-    function getPlayersForSnapshot(){
-      try{
-        if (Array.isArray(players)) return players;
-        const fromLS = JSON.parse(localStorage.getItem('cab_players') || '[]');
-        return Array.isArray(fromLS) ? fromLS : [];
-      }catch{ return []; }
-    }
-    function saveSnapshot({alwaysNew=false} = {}){
-      const data = getPlanilla();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    loadedReporte = loadReporte();
+    const modoEdicion = new URLSearchParams(location.search).get("edit")==="1";
 
-      const hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-      const fechaISO = data.meta.fechaISO || toISOFromDisplay(data.meta.fecha);
-      const snapshot = {
-        id: Date.now(),
-        meta: { ...data.meta, fechaISO, fechaDisplay: data.meta.fecha || '', ts: Date.now() },
-        res: data.res,
-        jugadores: data.jugadores,
-        players: getPlayersForSnapshot(),
-        otrosComentarios: data.otrosComentarios || ''
-      };
-      if (alwaysNew){
-        hist.push(snapshot);
-      } else {
-        const last = hist[hist.length - 1];
-        const sameKey = last && last.meta && last.meta.fechaISO === snapshot.meta.fechaISO && norm(last.meta.rival) === norm(snapshot.meta.rival);
-        if (!sameKey) hist.push(snapshot); else hist[hist.length - 1] = snapshot;
+    if (modoEdicion && loadedReporte){
+      populateFieldsFromReporte(loadedReporte);
+    } else {
+      populateFieldsFromEvent();
+      buildEmptyPlayerTable();
+    }
+
+    renderTable();
+    if (modoEdicion){
+      disableNuevo();
+    }
+
+  }catch(err){
+    console.error(err);
+  }
+}
+
+/* ============================================================
+   LLENAR CAMPOS
+============================================================ */
+function populateFieldsFromEvent(){
+  byId("p_categoria").value = eventInfo.categoria;
+  byId("p_rival").value = eventInfo.rival;
+  byId("p_condicion").value = eventInfo.condicion;
+  byId("p_predio").value = eventInfo.predio;
+  byId("p_fecha").value = eventInfo.fecha;
+  byId("p_hora").value = eventInfo.hora;
+  byId("p_nfecha").value = eventInfo.nFecha;
+  byId("p_formacion").value = eventInfo.formacion;
+}
+
+function populateFieldsFromReporte(rep){
+  const M = rep.meta || {};
+
+  byId("p_categoria").value = M.categoria;
+  byId("p_rival").value = M.rival;
+  byId("p_condicion").value = M.condicion;
+  byId("p_predio").value = M.predio;
+  byId("p_fecha").value = M.fecha;
+  byId("p_hora").value = M.hora;
+  byId("p_nfecha").value = M.nFecha;
+  byId("p_formacion").value = M.formacion;
+
+  byId("res_cab").value = rep.res?.res_cab ?? "";
+  byId("res_rival").value = rep.res?.res_rival ?? "";
+  byId("otrosComentarios").value = rep.otrosComentarios ?? "";
+
+  orderedPlayers = rep.players || loadPlayers();
+}
+
+/* ============================================================
+   ARMAR TABLA VACÍA
+============================================================ */
+function buildEmptyPlayerTable(){
+  orderedPlayers = [...players];
+}
+
+/* ============================================================
+   RENDER TABLA
+============================================================ */
+function renderTable(){
+  const tbody = byId("tbody");
+  tbody.innerHTML = "";
+
+  orderedPlayers.forEach(p=>{
+    const key = `${p.number}|${p.name}`;
+    const r = loadedReporte?.jugadores?.[key] || {};
+
+    const tr=document.createElement("tr");
+    tr.dataset.key = key;
+
+    tr.innerHTML = `
+      <td><input data-k="num" type="number" value="${p.number}"></td>
+      <td><input data-k="nom" type="text" value="${p.name}"></td>
+      <td><input data-k="pos" type="text" value="${r.pos ?? ""}"></td>
+      <td><input data-k="min" type="number" value="${r.min ?? ""}"></td>
+      <td><input data-k="gol" type="number" value="${r.gol ?? ""}"></td>
+      <td><input data-k="ast" type="number" value="${r.ast ?? ""}"></td>
+      <td><input data-k="ta" type="number" value="${r.ta ?? ""}"></td>
+      <td><input data-k="tr" type="number" value="${r.tr ?? ""}"></td>
+      <td><input data-k="punt" type="number" step="0.1" value="${r.punt ?? ""}"></td>
+      <td><input data-k="com" type="text" value="${r.com ?? ""}"></td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+/* ============================================================
+   RECOLECTAR DATOS
+============================================================ */
+function collectTableData(){
+  const rows=[...byId("tbody").querySelectorAll("tr")];
+  const out={};
+
+  rows.forEach(tr=>{
+    const key = tr.dataset.key;
+    const inputs=tr.querySelectorAll("input");
+    const row={};
+
+    inputs.forEach(inp=>{
+      const k=inp.dataset.k;
+      let v=inp.value;
+      if (["min","gol","ast","ta","tr","punt"].includes(k)){
+        v = v==="" ? null : Number(v);
       }
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
-      alert('Planilla guardada ✅');
-    }
+      row[k]=v;
+    });
 
-    function exportCSV(){
-      const data = getPlanilla();
-      const headers = ['Numero','Jugador','Posicion','Minutos','Goles','Asistencias','TA','TR','Puntaje','Comentario'];
-      const rows = [headers];
-      const list = [...players];
-      list.forEach(p=>{
-        const key = (p.number||'') + '|' + (p.name||'');
-        const r = (data.jugadores && data.jugadores[key]) || {};
-        rows.push([
-          p.number || '',
-          p.name || '',
-          r.pos ?? '',
-          r.min ?? '',
-          r.gol ?? '',
-          r.ast ?? '',
-          r.ta  ?? '',
-          r.tr  ?? '',
-          r.punt?? '',
-          (r.com ?? '').replace(/\r?\n/g,' ').trim()
-        ]);
-      });
-      rows.push([]);
-      rows.push(['Resultado', `${byId('labCab').textContent} ${data.res.res_cab} - ${byId('labRival').textContent} ${data.res.res_rival}`]);
-      rows.push(['Categoria', data.meta.categoria]);
-      rows.push(['Rival', data.meta.rival]);
-      rows.push(['Condicion', data.meta.condicion]);
-      rows.push(['Predio', data.meta.predio]);
-      rows.push(['Fecha', data.meta.fecha]);
-      rows.push(['Hora', data.meta.hora]);
-      rows.push(['NFecha', data.meta.nFecha]);
-      rows.push(['Formacion', data.meta.formacion]);
-      rows.push([]);
-      rows.push(['Otros comentarios', (data.otrosComentarios||'').replace(/\r?\n/g,' ').trim()]);
-      const csv = rows.map(r => r.map(v=>{ const s = String(v ?? ''); if (/[",\n]/.test(s)) return `"${s.replace(/"/g,'""')}"`; return s; }).join(',')).join('\n');
-      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'planilla_post_partido.csv'; a.click();
-    }
+    out[key]=row;
+  });
 
-    let autosaveTimer = setInterval(()=>{ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(getPlanilla())); }catch{} }, 10000);
-    document.getElementById('btnGuardar').addEventListener('click', ()=> saveSnapshot({alwaysNew:false}));
-    document.getElementById('btnGuardarNuevo').addEventListener('click', ()=> saveSnapshot({alwaysNew:true}));
-    document.getElementById('btnCSV').addEventListener('click', exportCSV);
-    document.getElementById('btnVolver').addEventListener('click', ()=>{ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(getPlanilla())); }catch{}; location.href = 'index.html'; });
-    document.getElementById('btnConsulta').addEventListener('click', () => {location.href = 'reporte1.html';});
-  </script>
+  return out;
+}
+
+/* ============================================================
+   OBTENER OBJETO COMPLETO
+============================================================ */
+function getPlanilla(finalNew=false){
+  const meta = {
+    ts: Date.now(),
+    uid: finalNew ? CAB_CORE.uuid() : (loadedReporte?.meta?.uid || CAB_CORE.uuid()),
+
+    categoria: eventInfo.categoria,
+    rival: eventInfo.rival,
+    condicion: eventInfo.condicion,
+    predio: eventInfo.predio,
+    fecha: eventInfo.fecha,
+    fechaISO: eventInfo.fechaISO,
+    hora: eventInfo.hora,
+    nFecha: eventInfo.nFecha,
+    formacion: eventInfo.formacion
+  };
+
+  return {
+    meta,
+    res:{
+      res_cab: Number(byId("res_cab").value || 0),
+      res_rival: Number(byId("res_rival").value || 0)
+    },
+    jugadores: collectTableData(),
+    otrosComentarios: byId("otrosComentarios").value,
+    players: orderedPlayers
+  };
+}
+
+/* ============================================================
+   GUARDAR
+============================================================ */
+function guardarNuevo(){
+  const data = getPlanilla(true);
+  const hist = loadHistorial();
+  hist.push(data);
+  saveHistorial(hist);
+  saveReporte(data);
+  alert("Guardado como nuevo registro");
+}
+
+function guardar(){
+  const uid = loadedReporte?.meta?.uid;
+  const data = getPlanilla(false);
+  const hist = loadHistorial();
+
+  const idx = hist.findIndex(x => String(x.meta.uid) === String(uid));
+
+  if (idx !== -1){
+    hist[idx] = data;
+    alert("Planilla actualizada");
+  } else {
+    hist.push(data);
+    alert("Guardado como nuevo registro");
+  }
+
+  saveHistorial(hist);
+  saveReporte(data);
+}
+
+/* ============================================================
+   CSV
+============================================================ */
+function exportCSV(){
+  const data = getPlanilla(false);
+
+  const headers = ["Numero","Jugador","Pos","Min","Gol","Ast","TA","TR","Punt","Comentario"];
+  const rows=[headers];
+
+  orderedPlayers.forEach(p=>{
+    const k=`${p.number}|${p.name}`;
+    const r=data.jugadores[k] || {};
+    rows.push([
+      p.number, p.name,
+      r.pos ?? "",
+      r.min ?? "",
+      r.gol ?? "",
+      r.ast ?? "",
+      r.ta ?? "",
+      r.tr ?? "",
+      r.punt ?? "",
+      (r.com ?? "").replace(/\n/g," ")
+    ]);
+  });
+
+  const csv = rows.map(r=>r.join(",")).join("\n");
+  const blob=new Blob([csv],{type:"text/csv"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="planilla.csv";
+  a.click();
+}
+
+/* ============================================================
+   NAVEGACIÓN
+============================================================ */
+byId("btnVolver").onclick = ()=>{
+  savePlayers(players);
+  saveEventInfo(eventInfo);
+  location.href="index.html";
+};
+
+byId("btnConsulta").onclick = ()=>{
+  const data = getPlanilla(false);
+  saveReporte(data);
+  location.href = "reporte1.html?from=planilla";
+};
+
+/* ============================================================
+   BOTONES
+============================================================ */
+byId("btnGuardar").onclick = guardar;
+byId("btnGuardarNuevo").onclick = guardarNuevo;
+byId("btnCSV").onclick = exportCSV;
+
+/* ============================================================
+   MODO EDICIÓN → DESHABILITAR BOTÓN NUEVO
+============================================================ */
+function disableNuevo(){
+  const b = byId("btnGuardarNuevo");
+  b.disabled = true;
+  b.style.opacity = .5;
+  b.title = "No disponible en modo edición";
+}
+
+/* ============================================================
+   HELPER
+============================================================ */
+function byId(id){ return document.getElementById(id); }
+
+</script>
+
 </body>
 </html>
