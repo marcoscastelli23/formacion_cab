@@ -276,19 +276,37 @@ document.addEventListener("DOMContentLoaded", () => {
 </div>
 
 <script>
-  // pero por ahora mantenemos la lógica dentro de este archivo.
-
   // Helpers
   function byId(id){ return document.getElementById(id); }
 
-  // Variables
-  let eventInfo = getEmptyEventInfo();
+  // Variables — se inicializan cuando core.js ya está listo
+  let eventInfo = {};
   let players = [];
 
   // Inicialización
   window.addEventListener("cab-auth-ready", ()=>{
+    // core.js ya cargó y CAB_NS ya está seteado en este punto
+    eventInfo = (typeof getEmptyEventInfo === "function") ? getEmptyEventInfo() : {};
     loadState();
     lucide.createIcons();
+
+    // Registrar listener del botón guardar aquí, cuando el DOM y core.js ya están listos
+    const btnGuardar = byId("guardarEvento");
+    if (btnGuardar) {
+      btnGuardar.onclick = ()=>{
+        eventInfo.categoria = byId("categoriaSelect").value;
+        eventInfo.nFecha = byId("NFecha").value;
+        eventInfo.fechaISO = byId("fechaEncuentro").value;
+        eventInfo.fecha = eventInfo.fechaISO ? formatFechaISOtoDisplay(eventInfo.fechaISO) : "";
+        eventInfo.hora = byId("horaEncuentro").value;
+        eventInfo.rival = byId("rivalSelect").value;
+        eventInfo.condicion = byId("condicionSelect").value;
+        eventInfo.predio    = byId("predioInput").value;
+        updateCT();
+        saveEventInfo(eventInfo);
+        pintarResumen();
+      };
+    }
   });
 
   /* ================================================
@@ -323,23 +341,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ================================================
-     GUARDAR EVENTO
+     GUARDAR EVENTO — movido a cab-auth-ready
   ================================================= */
-byId("guardarEvento").onclick = ()=>{
-    eventInfo.categoria = byId("categoriaSelect").value;
-    eventInfo.nFecha = byId("NFecha").value;
-    eventInfo.fechaISO = byId("fechaEncuentro").value;
-    eventInfo.fecha = eventInfo.fechaISO ? formatFechaISOtoDisplay(eventInfo.fechaISO) : "";
-    eventInfo.hora = byId("horaEncuentro").value;
-    eventInfo.rival = byId("rivalSelect").value;
-    eventInfo.condicion = byId("condicionSelect").value;
-    eventInfo.predio    = byId("predioInput").value;
-    
-    updateCT();
-    saveEventInfo(eventInfo);
-    pintarResumen();
-    
-  };
 
   /* ================================================
      RESUMEN
@@ -844,13 +847,16 @@ function sendWhatsApp() {
   
   document.addEventListener("DOMContentLoaded", () => {
     const catSel = document.getElementById("categoriaSelect");
-
-    catSel.addEventListener("change", () => {
-        eventInfo.categoria = catSel.value;
-        saveEventInfo(eventInfo);
-        updateCT();
-    });
-});
+    if (catSel) {
+      catSel.addEventListener("change", () => {
+        if (typeof saveEventInfo === "function") {
+          eventInfo.categoria = catSel.value;
+          saveEventInfo(eventInfo);
+          updateCT();
+        }
+      });
+    }
+  });
 
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

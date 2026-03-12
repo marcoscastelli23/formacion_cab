@@ -241,10 +241,59 @@
 const $ = (id)=>document.getElementById(id);
 
 /* ============================================================
-   CARGAR HISTORIAL
+   INICIALIZACIÓN — registra botones y carga historial
 ============================================================ */
 window.addEventListener("cab-auth-ready", ()=>{
   renderList(loadHistorial());
+
+  $("btnBuscar").onclick = ()=>{
+    const f = $("q_fecha").value;
+    const r = $("q_rival").value.trim().toLowerCase();
+    let list = loadHistorial();
+    if (f){ list = list.filter(x => x.meta?.fechaISO === f); }
+    if (r){ list = list.filter(x => (x.meta?.rival || "").toLowerCase().includes(r)); }
+    renderList(list);
+  };
+
+  $("btnLimpiar").onclick = ()=>{
+    $("q_fecha").value="";
+    $("q_rival").value="";
+    renderList(loadHistorial());
+    $("detalleCard").style.display="none";
+  };
+
+  $("tbodyList").onclick = (e)=>{
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const act = btn.dataset.act;
+    if (act==="ver") return ver(id);
+    if (act==="edit") return editar(id);
+    if (act==="del") return eliminar(id);
+  };
+
+  $("btnCSV").onclick = ()=>{
+    const id = $("detalleCard").dataset.sel;
+    if (!id) return;
+    const list = loadHistorial();
+    const item = list.find(x=>String(x.meta.uid)==String(id));
+    if (!item) return;
+    const headers = ["N","Jugador","Pos","Min","Gol","Ast","TA","TR","Punt","Comentario"];
+    const rows = [headers];
+    (item.players || []).forEach(p=>{
+      const key = `${p.number}|${p.name}`;
+      const r = item.jugadores[key] || {};
+      rows.push([p.number, p.name, r.pos??"", r.min??"", r.gol??"", r.ast??"", r.ta??"", r.tr??"", r.punt??"", (r.com??"").replace(/\n/g," ")]);
+    });
+    const csv = rows.map(r=>r.join(",")).join("\n");
+    const blob = new Blob([csv],{type:"text/csv"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="reporte.csv";
+    a.click();
+  };
+
+  $("btnVolver").onclick = ()=> location.href="index.html";
 });
 
 /* ============================================================
@@ -292,45 +341,11 @@ function renderList(list){
 }
 
 /* ============================================================
-   BUSCAR
+   HELPER
 ============================================================ */
-$("btnBuscar").onclick = ()=>{
-  const f = $("q_fecha").value;
-  const r = $("q_rival").value.trim().toLowerCase();
+function byId(id){ return document.getElementById(id); }
 
-  let list = loadHistorial();
-
-  if (f){
-    list = list.filter(x => x.meta?.fechaISO === f);
-  }
-  if (r){
-    list = list.filter(x => (x.meta?.rival || "").toLowerCase().includes(r));
-  }
-
-  renderList(list);
-};
-
-$("btnLimpiar").onclick = ()=>{
-  $("q_fecha").value="";
-  $("q_rival").value="";
-  renderList(loadHistorial());
-  $("detalleCard").style.display="none";
-};
-
-/* ============================================================
-   TABLA → ACCIONES
-============================================================ */
-$("tbodyList").onclick = (e)=>{
-  const btn = e.target.closest("button");
-  if (!btn) return;
-
-  const id = btn.dataset.id;
-  const act = btn.dataset.act;
-
-  if (act==="ver") return ver(id);
-  if (act==="edit") return editar(id);
-  if (act==="del") return eliminar(id);
-};
+</script>
 
 /* ============================================================
    VER DETALLE
@@ -409,49 +424,9 @@ function eliminar(id){
 }
 
 /* ============================================================
-   EXPORTAR CSV (del registro seleccionado)
+   HELPER
 ============================================================ */
-$("btnCSV").onclick = ()=>{
-  const id = $("detalleCard").dataset.sel;
-  if (!id) return;
-
-  const list = loadHistorial();
-  const item = list.find(x=>String(x.meta.uid)==String(id));
-  if (!item) return;
-
-  const headers = ["N","Jugador","Pos","Min","Gol","Ast","TA","TR","Punt","Comentario"];
-  const rows = [headers];
-
-  (item.players || []).forEach(p=>{
-    const key = `${p.number}|${p.name}`;
-    const r = item.jugadores[key] || {};
-
-    rows.push([
-      p.number, p.name,
-      r.pos ?? "",
-      r.min ?? "",
-      r.gol ?? "",
-      r.ast ?? "",
-      r.ta ?? "",
-      r.tr ?? "",
-      r.punt ?? "",
-      (r.com ?? "").replace(/\n/g," ")
-    ]);
-  });
-
-  const csv = rows.map(r=>r.join(",")).join("\n");
-  const blob = new Blob([csv],{type:"text/csv"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="reporte.csv";
-  a.click();
-};
-
-/* ============================================================
-   NAVEGACIÓN
-============================================================ */
-$("btnVolver").onclick = ()=> location.href="index.html";
-
+function byId(id){ return document.getElementById(id); }
 
 </script>
 

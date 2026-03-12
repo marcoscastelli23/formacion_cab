@@ -233,9 +233,8 @@ let orderedPlayers = [];
 let loadedReporte = null;
 
 /* ============================================================
-   INICIALIZACIÓN
+   INICIALIZACIÓN — registrada abajo junto a los botones
 ============================================================ */
-window.addEventListener("cab-auth-ready", initReporte);
 
 function initReporte(){
   try{
@@ -461,26 +460,29 @@ function exportCSV(){
 }
 
 /* ============================================================
-   NAVEGACIÓN
+   INICIALIZACIÓN — también registra los botones
 ============================================================ */
-byId("btnVolver").onclick = ()=>{
-  savePlayers(players);
-  saveEventInfo(eventInfo);
-  location.href="index.html";
-};
+window.addEventListener("cab-auth-ready", ()=>{
+  // Botones de navegación y acción
+  byId("btnVolver").onclick = ()=>{
+    savePlayers(players);
+    saveEventInfo(eventInfo);
+    location.href="index.html";
+  };
 
-byId("btnConsulta").onclick = ()=>{
-  const data = getPlanilla(false);
-  saveReporte(data);
-  location.href = "reporte1.html?from=planilla";
-};
+  byId("btnConsulta").onclick = ()=>{
+    const data = getPlanilla(false);
+    saveReporte(data);
+    location.href = "reporte1.html?from=planilla";
+  };
 
-/* ============================================================
-   BOTONES
-============================================================ */
-byId("btnGuardar").onclick = guardar;
-byId("btnGuardarNuevo").onclick = guardarNuevo;
-byId("btnCSV").onclick = exportCSV;
+  byId("btnGuardar").onclick = guardar;
+  byId("btnGuardarNuevo").onclick = guardarNuevo;
+  byId("btnCSV").onclick = exportCSV;
+
+  // Inicializar planilla
+  initReporte();
+});
 
 /* ============================================================
    MODO EDICIÓN → DESHABILITAR BOTÓN NUEVO
